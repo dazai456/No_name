@@ -3,7 +3,7 @@ docker run -it \
     -e POSTGRES_USER="root" \
     -e POSTGRES_PASSWORD="root" \
     -e POSTGRES_DB="ny_taxi" \
-    -v c:/Users/admin/Desktop/No_name/ny_taxi_postgres_data:/var/lib/postgresql/data \
+    -v $(pwd)/ny_taxi_postgres_data:/var/lib/postgresql/data \
     -p 5432:5432 \
     postgres:13
 
@@ -23,7 +23,7 @@ docker run -it \
     -e POSTGRES_USER="root" \
     -e POSTGRES_PASSWORD="root" \
     -e POSTGRES_DB="ny_taxi" \
-    -v c:/Users/admin/Desktop/No_name/ny_taxi_postgres_data:/var/lib/postgresql/data \
+    -v $(pwd)/ny_taxi_postgres_data:/var/lib/postgresql/data \
     -p 5432:5432 \
     --network=pg-network \
     --name=pg-database \
@@ -38,24 +38,27 @@ docker run -it \
     dpage/pgadmin4:latest
 
 <!-- run the ingestion -->
-python ingest_data.py \
+URL="https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz"
+python3 ingest_data.py \
     --user=root \
     --password=root \
     --host=localhost \
     --port=5432 \
     --db=ny_taxi \
     --table_name=yellow_taxi_trips \
-    --csv_file='yellow_tripdata_2021-01.csv'
+    --url = params.url
 
 docker build -t taxi_ingest:v001 .
 
+URL="https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz"
+
 docker run -it \
-    --network=pg-network \
-    taxi_ingest:v001 \
-        --user=0 \
-        --password=root \
-        --host=localhost \
-        --port=5432 \
-        --db=ny_taxi \
-        --table_name=yellow_taxi_trips \
-        --csv_file='yellow_tripdata_2021-01.csv'
+  --network=pg-network \
+  taxi_ingest:v001 \
+    --user=root \
+    --password=root \
+    --host=pg-database \
+    --port=5432 \
+    --db=ny_taxi \
+    --table_name=yellow_taxi_trips \
+    --url=${URL}

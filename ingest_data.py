@@ -11,13 +11,22 @@ def main(params):
     port = params.port
     db = params.db
     table_name = params.table_name
-    csv_file = params.csv_file # 'yellow_tripdata_2021-01.csv'
+    url = params.url
     
+    # the backup files are gzipped, and it's important to keep the correct extension
+    # for pandas to be able to open the file
+    if url.endswith('.csv.gz'):
+        csv_name = 'output.csv.gz'
+    else:
+        csv_name = 'output.csv'
+
+    os.system(f"wget {url} -O {csv_name}")
+
     # create egine # connect to db
     engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db}')
 
     # insert data into dv
-    df_iter = pd.read_csv(csv_file, iterator=True, chunksize=100000)
+    df_iter = pd.read_csv(csv_name, iterator=True, chunksize=100000)
     df = next(df_iter)
 
     # changing the type this columns
@@ -48,8 +57,7 @@ if __name__ == '__main__':
     parser.add_argument('--port', required=True, help='port for postgres')
     parser.add_argument('--db', required=True, help='database name for postgres')
     parser.add_argument('--table_name', required=True, help='name of the table  for postgres')
-    parser.add_argument('--csv_file', required=True, help='csv file')
-    # parser.add_argument('--url', required=True, help='url of the csv file')
+    parser.add_argument('--url', required=True, help='url of the csv file')
 
     args = parser.parse_args()
 
